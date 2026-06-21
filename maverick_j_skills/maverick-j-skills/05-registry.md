@@ -1,30 +1,30 @@
-# 论点注册表与评分
+# Argument Registry and Scoring
 
-> 本文件定义论点注册表 (ArgumentRegistry) 的管理逻辑、生命周期跟踪和论点强度评分算法。
+> This file defines the management logic, lifecycle tracking, and argument strength scoring algorithm for the ArgumentRegistry.
 
 ---
 
-## 1. ArgumentRecord（论点记录）
+## 1. ArgumentRecord
 
-注册表中每个论点存储为一条 `ArgumentRecord`:
+Each argument in the registry is stored as an `ArgumentRecord`:
 
 ```
 ArgumentRecord:
-  argument: Argument           # 论点本体 (id, claim, reasoning, evidence, status)
-  raised_in_round: int         # 提出轮次
-  raised_by: "advocate" | "critic"  # 提出方
-  rebuttals: list[Rebuttal]    # 收到的反驳列表
-  fact_checks: list[FactCheck] # 收到的校验结果列表
-  modification_history: list[str]  # 修正历史记录
+  argument: Argument           # The argument itself (id, claim, reasoning, evidence, status)
+  raised_in_round: int         # Round in which the argument was raised
+  raised_by: "advocate" | "critic"  # Which side raised it
+  rebuttals: list[Rebuttal]    # List of rebuttals received
+  fact_checks: list[FactCheck] # List of fact-check results received
+  modification_history: list[str]  # Revision history log
 ```
 
 ---
 
-## 2. 注册表操作
+## 2. Registry Operations
 
 ### register(argument, round, agent)
 
-注册新论点到注册表。
+Register a new argument in the registry.
 
 ```
 registry[arg.id] = ArgumentRecord(
@@ -39,7 +39,7 @@ registry[arg.id] = ArgumentRecord(
 
 ### add_rebuttal(arg_id, rebuttal)
 
-给目标论点追加一条反驳记录。
+Append a rebuttal record to the target argument.
 
 ```
 if arg_id in registry:
@@ -48,7 +48,7 @@ if arg_id in registry:
 
 ### add_fact_check(arg_id, check)
 
-给目标论点追加校验结果。如果判定为 `flawed`，自动将论点状态标记为 `REBUTTED`。
+Append a fact-check result to the target argument. If the verdict is `flawed`, automatically marks the argument status as `REBUTTED`.
 
 ```
 if arg_id in registry:
@@ -60,7 +60,7 @@ if arg_id in registry:
 
 ### update_status(arg_id, new_status, reason)
 
-手动更新论点状态（用于让步等场景）。
+Manually update an argument's status (used for concessions and similar scenarios).
 
 ```
 if arg_id in registry:
@@ -71,7 +71,7 @@ if arg_id in registry:
 
 ### get_active_arguments(side=None)
 
-获取所有存活论点（状态为 `active` 或 `modified`），可按阵营过滤。
+Retrieve all surviving arguments (status `active` or `modified`), optionally filtered by side.
 
 ```
 results = [r for r in registry.values() if r.argument.status in ("active", "modified")]
@@ -82,36 +82,36 @@ return results
 
 ---
 
-## 3. 论点强度评分算法
+## 3. Argument Strength Scoring Algorithm
 
-生成最终报告时，对每个存活论点计算 `strength` 分数：
+When generating the final report, a `strength` score is calculated for each surviving argument:
 
 ```
 def calculate_strength(record: ArgumentRecord) -> int:
-    score = 5                                    # 基础分
+    score = 5                                    # Base score
 
-    # 每经受一次反驳挑战 +1 (存活说明论点有韧性)
+    # +1 for each rebuttal challenge survived (surviving challenges shows resilience)
     score += len(record.rebuttals)
 
-    # Fact-Checker 评估加减分
+    # Adjustments from Fact-Checker verdicts
     for fc in record.fact_checks:
         if fc.verdict == "valid":
-            score += 1                           # 被认定有效 +1
+            score += 1                           # Verified as valid +1
         elif fc.verdict == "flawed":
-            score -= 3                           # 被认定有缺陷 -3
+            score -= 3                           # Identified as flawed -3
 
-    # 钳位到 [1, 10]
+    # Clamp to [1, 10]
     return max(1, min(10, score))
 ```
 
-**评分逻辑解读**:
-- 基础 5 分，经受反驳越多说明论点越经得起考验
-- Fact-Checker 的 `valid` 判定加 1 分，`flawed` 扣 3 分（重罚逻辑缺陷）
-- `needs_context` 和 `unverifiable` 不影响分数
+**Scoring rationale**:
+- Base score of 5; surviving more rebuttals demonstrates the argument is more battle-tested
+- Fact-Checker `valid` adds 1; `flawed` deducts 3 (heavy penalty for logical flaws)
+- `needs_context` and `unverifiable` do not affect the score
 
 ---
 
-## 4. 存活统计
+## 4. Survival Statistics
 
 ```
 def get_survivor_stats(registry) -> dict:
@@ -129,12 +129,12 @@ def get_survivor_stats(registry) -> dict:
 
 ---
 
-## 5. 各 Node 的注册表更新时机
+## 5. Registry Update Timing per Node
 
-| 执行阶段 | 注册表操作 |
-|----------|-----------|
-| Advocate Node | `register()` 新论点 + `add_rebuttal()` 正方反驳 + `update_status()` 让步 |
-| Critic Node   | `register()` 新论点 + `add_rebuttal()` 反方反驳 + `update_status()` 让步 |
-| Fact-Checker Node | `add_fact_check()` 所有校验结果 (flawed 自动触发 status 变更) |
-| Moderator Node | 不修改注册表，仅读取 |
-| Report Node   | 读取 `get_active_arguments()` + `calculate_strength()` 生成评分 |
+| Execution phase | Registry operation |
+|----------------|-------------------|
+| Advocate Node | `register()` new arguments + `add_rebuttal()` pro-side rebuttals + `update_status()` concessions |
+| Critic Node   | `register()` new arguments + `add_rebuttal()` con-side rebuttals + `update_status()` concessions |
+| Fact-Checker Node | `add_fact_check()` for all verdicts (flawed automatically triggers status change) |
+| Moderator Node | Read-only; does not modify the registry |
+| Report Node   | Read `get_active_arguments()` + `calculate_strength()` to generate scored arguments |

@@ -1,66 +1,66 @@
 ---
 name: marverick-j-skills
-description: 对任何决策问题发起多 Agent 对抗式辩论，通过正反攻防、事实校验和收敛裁决，产出结构化决策报告。
+description: Launch a multi-agent adversarial debate on any decision question. Produces a structured decision report through pro/con argumentation, fact-checking, and convergence judgment.
 ---
 
 # Adversarial Multi-Agent Debate Engine
 
-> 对任何决策问题发起多 Agent 对抗式辩论，通过正反攻防、事实校验和收敛裁决，产出结构化决策报告。
+> Launch a multi-agent adversarial debate on any decision question. Produces a structured decision report through pro/con argumentation, fact-checking, and convergence judgment.
 
-## 何时使用此 Skill
+## When to Use This Skill
 
-- 用户提出 **"应不应该 X?"** 类型的决策问题
-- 需要 **多角度权衡利弊** 的技术方案选型
-- 战略级决策需要 **结构化论证** 而非直觉判断
-- 用户明确要求 "辩论分析"、"正反论证"、"Devil's Advocate"
+- The user poses a **"Should we X?"** type of decision question
+- A technology choice requires **multi-perspective trade-off analysis**
+- A strategic decision needs **structured argumentation** rather than gut instinct
+- The user explicitly requests "debate analysis", "pro/con argumentation", or "Devil's Advocate"
 
-## 核心理念
+## Core Idea
 
-单一视角的分析容易产生确认偏误。通过强制 **正反对抗 + 中立事实校验 + 主持人收敛判定**，迫使每个论点经受多轮挑战，只有「存活」下来的论点才进入最终报告。
+Single-perspective analysis is prone to confirmation bias. By forcing **adversarial pro/con debate + neutral fact-checking + moderator convergence judgment**, every argument must survive multiple rounds of challenge — only arguments that "survive" make it into the final report.
 
-## 30 秒概览
+## 30-Second Overview
 
 ```
-                    每轮辩论流程
+                    Per-Round Debate Flow
   ┌──────────────────────────────────────┐
-  │  Advocate (正方) → Critic (反方)      │
+  │  Advocate (pro) → Critic (con)       │
   │       ↓                ↓             │
-  │    Fact-Checker (中立校验)            │
+  │    Fact-Checker (neutral audit)      │
   │            ↓                         │
-  │    Moderator (裁决: 继续 or 终止)     │
+  │    Moderator (ruling: continue/end)  │
   └──────────┬───────────────────────────┘
-             │ 收敛? → 生成 DecisionReport
-             │ 未收敛? → 下一轮
+             │ Converged? → Generate DecisionReport
+             │ Not yet?   → Next round
              ↓
 ```
 
-4 个 Agent · 最多 5 轮 · 论点生命周期追踪 · 结构化 JSON 输出 · **完整辩论记录 + 总结分析** 双段式报告
+4 Agents · Up to 5 rounds · Argument lifecycle tracking · Structured JSON output · **Full debate transcript + summary analysis** two-part report
 
-## 子文件索引
+## Sub-File Index
 
-按需加载以下文件，**无需一次性全部读取**：
+Load the following files on demand — **no need to read all at once**:
 
-| 文件 | 用途 | 何时加载 |
-|------|------|----------|
-| [01-identity.md](01-identity.md) | Agent 角色定义、职责边界 | **首次** — 了解 4 个角色是什么 |
-| [02-protocol.md](02-protocol.md) | 辩论执行协议、状态机、收敛逻辑 | **首次** — 了解辩论怎么跑 |
-| [03-prompts.md](03-prompts.md) | 5 个 Agent 的完整系统提示词 | **执行时** — 需要实际调用 LLM 时 |
-| [04-schemas.md](04-schemas.md) | 所有结构化输出 JSON Schema | **执行时** — 需要解析 LLM 输出时 |
-| [05-registry.md](05-registry.md) | 论点注册表、生命周期、评分逻辑 | **执行时** — 跟踪论点存活状态 |
-| [06-integration.md](06-integration.md) | 多框架接入指南 (LangGraph/CrewAI/AutoGen/...) | **集成时** — 要接入具体框架时 |
-| [07-config.md](07-config.md) | 配置参数、模型选择、使用示例 | **配置时** — 调参或看示例时 |
+| File | Purpose | When to load |
+|------|---------|--------------|
+| [01-identity.md](01-identity.md) | Agent role definitions and responsibility boundaries | **First** — understand the 4 roles |
+| [02-protocol.md](02-protocol.md) | Debate execution protocol, state machine, convergence logic | **First** — understand how the debate runs |
+| [03-prompts.md](03-prompts.md) | Complete system prompts for all 5 agents | **At execution** — when making actual LLM calls |
+| [04-schemas.md](04-schemas.md) | All structured output JSON schemas | **At execution** — when parsing LLM output |
+| [05-registry.md](05-registry.md) | Argument registry, lifecycle tracking, scoring logic | **At execution** — when tracking argument survival |
+| [06-integration.md](06-integration.md) | Multi-framework integration guide (LangGraph/CrewAI/AutoGen/…) | **At integration** — when connecting to a specific framework |
+| [07-config.md](07-config.md) | Config parameters, model selection, usage examples | **At config** — when tuning or checking examples |
 
-### 推荐加载顺序
+### Recommended Loading Order
 
-**最小启动集** (理解 + 执行):
-1. `01-identity.md` → 角色是谁
-2. `02-protocol.md` → 怎么跑
+**Minimum startup set** (understand + execute):
+1. `01-identity.md` → who the roles are
+2. `02-protocol.md` → how it runs
 
-**完整执行集** (实际运行辩论):
-3. `03-prompts.md` → LLM 提示词
-4. `04-schemas.md` → 输出格式
-5. `05-registry.md` → 论点追踪
+**Full execution set** (actually run the debate):
+3. `03-prompts.md` → LLM prompts
+4. `04-schemas.md` → output format
+5. `05-registry.md` → argument tracking
 
-**按需参考**:
-6. `06-integration.md` → 框架适配
-7. `07-config.md` → 调参 & 示例
+**Reference on demand**:
+6. `06-integration.md` → framework integration
+7. `07-config.md` → tuning & examples

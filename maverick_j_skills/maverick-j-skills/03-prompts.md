@@ -1,11 +1,11 @@
-# Agent 系统提示词
+# Agent System Prompts
 
-> 本文件包含 5 个 Agent 的完整系统提示词模板，可直接用于 LLM 调用。
-> 模板变量用 `{variable}` 标记。
+> This file contains the complete system prompt templates for all 5 agents, ready for direct LLM invocation.
+> Template variables are marked with `{variable}`.
 
 ---
 
-## 1. Advocate（正方论证者）
+## 1. Advocate
 
 ### System Prompt
 
@@ -57,7 +57,7 @@ This is round {current_round}. Please speak as the Advocate.
 
 ---
 
-## 2. Critic（反方批评者）
+## 2. Critic
 
 ### System Prompt
 
@@ -108,7 +108,7 @@ This is round {current_round}. Please speak as the Critic and rebut the Advocate
 
 ---
 
-## 3. Fact-Checker（事实校验者）
+## 3. Fact-Checker
 
 ### System Prompt
 
@@ -160,7 +160,7 @@ Please fact-check and logic-check all of the above arguments.
 
 ---
 
-## 4. Moderator（主持人）
+## 4. Moderator
 
 ### System Prompt
 
@@ -211,7 +211,7 @@ Please deliver your ruling for round {current_round}.
 
 ---
 
-## 5. Report Generator（报告生成器）
+## 5. Report Generator
 
 ### System Prompt
 
@@ -256,9 +256,9 @@ Please generate the decision report based on the above debate transcript.
 
 ---
 
-## 历史格式化约定
+## History Formatting Convention
 
-**辩论历史** (传给 Advocate / Critic) 每轮格式:
+**Debate history** (passed to Advocate / Critic) format per round:
 ```
 === Round {n} ===
 [Advocate's Arguments]

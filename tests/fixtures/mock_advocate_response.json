@@ -3,22 +3,22 @@
   "arguments": [
     {
       "id": "ADV-R1-01",
-      "claim": "Go 语言编译后二进制体积小，部署成本显著降低",
-      "reasoning": "相比 JVM 约 200-500MB 的运行时内存，Go 服务通常只需 20-50MB",
-      "evidence": "多家公司迁移后报告容器资源降低 60-80%",
+      "claim": "Go's compiled binaries are small, significantly reducing deployment costs",
+      "reasoning": "Compared to the JVM's ~200-500 MB runtime memory footprint, Go services typically require only 20-50 MB",
+      "evidence": "Multiple companies report a 60-80% reduction in container resources after migration",
       "status": "active"
     },
     {
       "id": "ADV-R1-02",
-      "claim": "Go 冷启动速度远超 Java，适合 Serverless 场景",
-      "reasoning": "Go 编译为原生二进制，启动时间在毫秒级，而 JVM 需要数秒",
-      "evidence": "AWS Lambda 冷启动测试数据显示 Go 约 50ms，Java 约 3-5s",
+      "claim": "Go's cold-start time far outperforms Java, making it ideal for Serverless workloads",
+      "reasoning": "Go compiles to a native binary with millisecond startup times, while the JVM takes several seconds",
+      "evidence": "AWS Lambda cold-start benchmarks show Go at ~50 ms vs. Java at ~3-5 s",
       "status": "active"
     },
     {
       "id": "ADV-R1-03",
-      "claim": "Go 的并发模型更适合微服务架构",
-      "reasoning": "goroutine 比 Java 线程轻量得多，天然适合高并发 API Gateway",
+      "claim": "Go's concurrency model is better suited to microservice architectures",
+      "reasoning": "Goroutines are far lighter than Java threads, making them a natural fit for high-concurrency API Gateways",
       "evidence": null,
       "status": "active"
     }

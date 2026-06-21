@@ -1,10 +1,10 @@
-# 结构化输出 Schema
+# Structured Output Schemas
 
-> 本文件定义所有 Agent 输入/输出的 JSON Schema，用于 LLM structured output 解析。
+> This file defines the JSON schemas for all agent inputs/outputs, used for LLM structured output parsing.
 
 ---
 
-## 1. Argument（论点）
+## 1. Argument
 
 ```json
 {
@@ -13,26 +13,26 @@
   "properties": {
     "id": {
       "type": "string",
-      "description": "论点 ID，格式如 ADV-R1-01 或 CRT-R1-01",
+      "description": "Argument ID, e.g. ADV-R1-01 or CRT-R1-01",
       "pattern": "^(ADV|CRT)-R\\d+-\\d+$"
     },
     "claim": {
       "type": "string",
-      "description": "论点主张"
+      "description": "The argument claim"
     },
     "reasoning": {
       "type": "string",
-      "description": "推理过程"
+      "description": "Reasoning process"
     },
     "evidence": {
       "type": ["string", "null"],
-      "description": "支撑证据 (可选)"
+      "description": "Supporting evidence (optional)"
     },
     "status": {
       "type": "string",
       "enum": ["active", "rebutted", "conceded", "modified"],
       "default": "active",
-      "description": "论点状态"
+      "description": "Argument status"
     }
   }
 }
@@ -40,7 +40,7 @@
 
 ---
 
-## 2. Rebuttal（反驳）
+## 2. Rebuttal
 
 ```json
 {
@@ -49,15 +49,15 @@
   "properties": {
     "target_argument_id": {
       "type": "string",
-      "description": "反驳目标论点 ID"
+      "description": "ID of the argument being rebutted"
     },
     "counter_claim": {
       "type": "string",
-      "description": "反驳主张"
+      "description": "Counter-claim"
     },
     "reasoning": {
       "type": "string",
-      "description": "反驳推理"
+      "description": "Rebuttal reasoning"
     }
   }
 }
@@ -65,7 +65,7 @@
 
 ---
 
-## 3. FactCheck（事实校验）
+## 3. FactCheck
 
 ```json
 {
@@ -74,24 +74,24 @@
   "properties": {
     "target_argument_id": {
       "type": "string",
-      "description": "校验目标论点 ID"
+      "description": "ID of the argument being checked"
     },
     "verdict": {
       "type": "string",
       "enum": ["valid", "flawed", "needs_context", "unverifiable"],
-      "description": "校验判定"
+      "description": "Fact-check verdict"
     },
     "explanation": {
       "type": "string",
-      "description": "校验说明"
+      "description": "Explanation of the verdict"
     },
     "correction": {
       "type": ["string", "null"],
-      "description": "修正建议 (可选)"
+      "description": "Suggested correction (optional)"
     },
     "fallacy_type": {
       "type": ["string", "null"],
-      "description": "谬误类型 (可选，当 verdict=flawed 时应填写)"
+      "description": "Fallacy type (optional; should be filled when verdict=flawed)"
     }
   }
 }
@@ -99,7 +99,7 @@
 
 ---
 
-## 4. AgentResponse（Advocate / Critic 输出）
+## 4. AgentResponse (Advocate / Critic output)
 
 ```json
 {
@@ -109,31 +109,31 @@
     "agent_role": {
       "type": "string",
       "enum": ["advocate", "critic"],
-      "description": "Agent 角色"
+      "description": "Agent role"
     },
     "arguments": {
       "type": "array",
       "items": { "$ref": "#/Argument" },
-      "description": "本轮提出的论点"
+      "description": "Arguments raised this round"
     },
     "rebuttals": {
       "type": "array",
       "items": { "$ref": "#/Rebuttal" },
       "default": [],
-      "description": "对对方论点的反驳"
+      "description": "Rebuttals against the opponent's arguments"
     },
     "concessions": {
       "type": "array",
       "items": { "type": "string" },
       "default": [],
-      "description": "承认对方有道理的部分"
+      "description": "Points conceded to the opponent"
     },
     "confidence_shift": {
       "type": "number",
       "minimum": -1,
       "maximum": 1,
       "default": 0,
-      "description": "本轮立场信心变化"
+      "description": "Confidence change in own position this round"
     }
   }
 }
@@ -141,7 +141,7 @@
 
 ---
 
-## 5. FactCheckResponse（Fact-Checker 输出）
+## 5. FactCheckResponse (Fact-Checker output)
 
 ```json
 {
@@ -151,11 +151,11 @@
     "checks": {
       "type": "array",
       "items": { "$ref": "#/FactCheck" },
-      "description": "所有校验结果"
+      "description": "All fact-check results"
     },
     "overall_assessment": {
       "type": "string",
-      "description": "本轮论证质量整体评估"
+      "description": "Overall assessment of argumentation quality this round"
     }
   }
 }
@@ -163,7 +163,7 @@
 
 ---
 
-## 6. ModeratorResponse（Moderator 输出）
+## 6. ModeratorResponse (Moderator output)
 
 ```json
 {
@@ -172,26 +172,26 @@
   "properties": {
     "round_summary": {
       "type": "string",
-      "description": "本轮总结"
+      "description": "Summary of this round"
     },
     "key_divergences": {
       "type": "array",
       "items": { "type": "string" },
-      "description": "当前关键未解决分歧"
+      "description": "Current key unresolved divergences"
     },
     "convergence_score": {
       "type": "number",
       "minimum": 0,
       "maximum": 1,
-      "description": "收敛分数"
+      "description": "Convergence score"
     },
     "should_continue": {
       "type": "boolean",
-      "description": "是否继续辩论"
+      "description": "Whether to continue the debate"
     },
     "guidance_for_next_round": {
       "type": ["string", "null"],
-      "description": "下一轮焦点引导 (可选)"
+      "description": "Focus guidance for the next round (optional)"
     }
   }
 }
@@ -199,7 +199,7 @@
 
 ---
 
-## 7. DecisionReport（最终决策报告）
+## 7. DecisionReport (Final decision report)
 
 ```json
 {
@@ -208,54 +208,54 @@
   "properties": {
     "question": {
       "type": "string",
-      "description": "决策问题"
+      "description": "Decision question"
     },
     "executive_summary": {
       "type": "string",
-      "description": "3-5 句概括"
+      "description": "3–5 sentence summary"
     },
     "recommendation": {
       "type": "object",
       "required": ["direction", "confidence", "conditions"],
       "properties": {
-        "direction": { "type": "string", "description": "建议方向" },
+        "direction": { "type": "string", "description": "Recommended direction" },
         "confidence": { "type": "string", "enum": ["high", "medium", "low"] },
-        "conditions": { "type": "array", "items": { "type": "string" }, "description": "建议成立的前提条件" }
+        "conditions": { "type": "array", "items": { "type": "string" }, "description": "Preconditions for the recommendation to hold" }
       }
     },
     "pro_arguments": {
       "type": "array",
       "items": { "$ref": "#/ScoredArgument" },
-      "description": "正方论点，按 strength 降序"
+      "description": "Pro-side arguments, sorted by strength descending"
     },
     "con_arguments": {
       "type": "array",
       "items": { "$ref": "#/ScoredArgument" },
-      "description": "反方论点，按 strength 降序"
+      "description": "Con-side arguments, sorted by strength descending"
     },
     "resolved_disagreements": {
       "type": "array",
       "items": { "type": "string" },
       "default": [],
-      "description": "已达成共识的议题"
+      "description": "Issues where consensus was reached"
     },
     "unresolved_disagreements": {
       "type": "array",
       "items": { "type": "string" },
       "default": [],
-      "description": "仍有分歧的议题"
+      "description": "Issues still in dispute"
     },
     "risk_factors": {
       "type": "array",
       "items": { "type": "string" },
       "default": [],
-      "description": "风险因素"
+      "description": "Risk factors"
     },
     "next_steps": {
       "type": "array",
       "items": { "type": "string" },
       "default": [],
-      "description": "具体后续行动"
+      "description": "Concrete follow-up actions"
     },
     "debate_stats": {
       "type": "object",
@@ -273,18 +273,18 @@
 }
 ```
 
-### ScoredArgument（评分论点）
+### ScoredArgument
 
 ```json
 {
   "type": "object",
   "required": ["claim", "strength", "survived_challenges"],
   "properties": {
-    "claim": { "type": "string", "description": "论点主张" },
-    "strength": { "type": "integer", "minimum": 1, "maximum": 10, "description": "论点强度" },
-    "survived_challenges": { "type": "integer", "description": "经历挑战次数" },
-    "modifications": { "type": "array", "items": { "type": "string" }, "default": [], "description": "修正历史" },
-    "supporting_evidence": { "type": ["string", "null"], "description": "支撑证据" }
+    "claim": { "type": "string", "description": "Argument claim" },
+    "strength": { "type": "integer", "minimum": 1, "maximum": 10, "description": "Argument strength score" },
+    "survived_challenges": { "type": "integer", "description": "Number of challenges survived" },
+    "modifications": { "type": "array", "items": { "type": "string" }, "default": [], "description": "Revision history" },
+    "supporting_evidence": { "type": ["string", "null"], "description": "Supporting evidence" }
   }
 }
 ```

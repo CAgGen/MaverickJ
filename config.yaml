@@ -1,12 +1,12 @@
-# 方案 A：统一切换（已禁用，使用方案 B 混合调用）
+# Option A: Unified switch (disabled; using Option B mixed-model routing)
 # default_provider: Claude
 # default_model: claude-haiku-4-5-20251001
 # default_temperature: 0.4
 # default_max_tokens: 8192
 
-# 方案 B：混合调用
-# 需要深度推理/创造性论证的角色 → Sonnet（更智能）
-# 结构化分析/机械性评分的角色  → Haiku（更快）
+# Option B: Mixed-model routing
+# Roles requiring deep reasoning/creative argumentation → Sonnet (smarter)
+# Roles with structured analysis/mechanical scoring     → Haiku (faster)
 agents:
   advocate:
     provider: claude

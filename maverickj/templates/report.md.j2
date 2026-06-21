@@ -1,64 +1,64 @@
-# 决策分析报告
+# Decision Analysis Report
 
-**决策问题：** {{ report.question }}
+**Decision Question:** {{ report.question }}
 
-## 执行摘要
+## Executive Summary
 
 {{ report.executive_summary }}
 
-## 建议
+## Recommendation
 
-**方向：** {{ report.recommendation.direction }}
+**Direction:** {{ report.recommendation.direction }}
 
-**置信度：** {% if report.recommendation.confidence.value == "high" %}🟢 高{% elif report.recommendation.confidence.value == "medium" %}🟡 中{% else %}🔴 低{% endif %}
+**Confidence:** {% if report.recommendation.confidence.value == "high" %}🟢 High{% elif report.recommendation.confidence.value == "medium" %}🟡 Medium{% else %}🔴 Low{% endif %}
 
 {% if report.recommendation.conditions %}
-**前提条件：**
+**Preconditions:**
 {% for cond in report.recommendation.conditions %}
 - {{ cond }}
 {% endfor %}
 {% endif %}
 
-## 正方论点（按强度排序）
+## Pro Arguments (sorted by strength)
 
 {% for arg in report.pro_arguments %}
 ### {{ loop.index }}. {{ arg.claim }}
 
-- **强度：** {{ arg.strength }}/10
-- **经受挑战次数：** {{ arg.survived_challenges }}
+- **Strength:** {{ arg.strength }}/10
+- **Challenges survived:** {{ arg.survived_challenges }}
 {% if arg.modifications %}
-- **修正历史：**
+- **Revision history:**
 {% for mod in arg.modifications %}
   - {{ mod }}
 {% endfor %}
 {% endif %}
 {% if arg.supporting_evidence %}
-- **支撑证据：** {{ arg.supporting_evidence }}
+- **Supporting evidence:** {{ arg.supporting_evidence }}
 {% endif %}
 
 {% endfor %}
 
-## 反方论点（按强度排序）
+## Con Arguments (sorted by strength)
 
 {% for arg in report.con_arguments %}
 ### {{ loop.index }}. {{ arg.claim }}
 
-- **强度：** {{ arg.strength }}/10
-- **经受挑战次数：** {{ arg.survived_challenges }}
+- **Strength:** {{ arg.strength }}/10
+- **Challenges survived:** {{ arg.survived_challenges }}
 {% if arg.modifications %}
-- **修正历史：**
+- **Revision history:**
 {% for mod in arg.modifications %}
   - {{ mod }}
 {% endfor %}
 {% endif %}
 {% if arg.supporting_evidence %}
-- **支撑证据：** {{ arg.supporting_evidence }}
+- **Supporting evidence:** {{ arg.supporting_evidence }}
 {% endif %}
 
 {% endfor %}
 
 {% if report.resolved_disagreements %}
-## 已解决的分歧
+## Resolved Disagreements
 
 {% for item in report.resolved_disagreements %}
 - {{ item }}
@@ -66,7 +66,7 @@
 {% endif %}
 
 {% if report.unresolved_disagreements %}
-## 未解决的分歧
+## Unresolved Disagreements
 
 {% for item in report.unresolved_disagreements %}
 - {{ item }}
@@ -74,7 +74,7 @@
 {% endif %}
 
 {% if report.risk_factors %}
-## 风险因素
+## Risk Factors
 
 {% for item in report.risk_factors %}
 - {{ item }}
@@ -82,22 +82,22 @@
 {% endif %}
 
 {% if report.next_steps %}
-## 后续行动
+## Next Steps
 
 {% for step in report.next_steps %}
 {{ loop.index }}. {{ step }}
 {% endfor %}
 {% endif %}
 
-## 辩论统计
+## Debate Statistics
 
-| 指标 | 数值 |
-|------|------|
-| 总轮数 | {{ report.debate_stats.total_rounds }} |
-| 提出论点数 | {{ report.debate_stats.arguments_raised }} |
-| 存活论点数 | {{ report.debate_stats.arguments_survived }} |
-| 是否收敛 | {% if report.debate_stats.convergence_achieved %}是{% else %}否{% endif %} |
-{% if report.debate_stats.total_tokens %}| Token 消耗 | {{ report.debate_stats.total_tokens }} |
+| Metric | Value |
+|--------|-------|
+| Total rounds | {{ report.debate_stats.total_rounds }} |
+| Arguments raised | {{ report.debate_stats.arguments_raised }} |
+| Arguments survived | {{ report.debate_stats.arguments_survived }} |
+| Convergence achieved | {% if report.debate_stats.convergence_achieved %}Yes{% else %}No{% endif %} |
+{% if report.debate_stats.total_tokens %}| Token usage | {{ report.debate_stats.total_tokens }} |
 {% endif %}
-{% if report.debate_stats.total_cost_usd %}| 预估成本 | ${{ "%.4f"|format(report.debate_stats.total_cost_usd) }} |
+{% if report.debate_stats.total_cost_usd %}| Estimated cost | ${{ "%.4f"|format(report.debate_stats.total_cost_usd) }} |
 {% endif %}

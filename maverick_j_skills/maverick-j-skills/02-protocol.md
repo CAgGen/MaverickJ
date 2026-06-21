@@ -1,148 +1,149 @@
-# 辩论执行协议
+# Debate Execution Protocol
 
-> 本文件定义辩论的状态结构、执行流程、收敛终止逻辑和论点 ID 规范。
+> This file defines the debate's state structure, execution flow, convergence termination logic, and argument ID specification.
 
 ---
 
-## 1. 状态结构
+## 1. State Structure
 
-辩论引擎维护一个全局 `DebateState`，在每个 Agent 节点间传递：
+The debate engine maintains a global `DebateState` passed between each agent node:
 
 ```
 DebateState:
-  question: str               # 决策问题
-  context: str | null          # 补充背景
-  current_round: int           # 当前轮次 (从 1 开始)
-  max_rounds: int              # 最大轮数 (默认 5)
-  convergence_score_target: float  # 收敛阈值 (默认 0.8)
-  rounds: list[DebateRound]    # 历史轮次记录
-  argument_registry: dict      # 论点生命周期注册表 (见 05-registry.md)
+  question: str               # Decision question
+  context: str | null          # Additional background
+  current_round: int           # Current round (starts at 1)
+  max_rounds: int              # Maximum rounds (default 5)
+  convergence_score_target: float  # Convergence threshold (default 0.8)
+  rounds: list[DebateRound]    # Historical round records
+  argument_registry: dict      # Argument lifecycle registry (see 05-registry.md)
   status: "running" | "converged" | "max_rounds" | "error"
   convergence_reason: str | null
 ```
 
-每个 `DebateRound` 包含:
+Each `DebateRound` contains:
 ```
 DebateRound:
   round_number: int
-  advocate: AgentResponse      # 正方输出
-  critic: AgentResponse        # 反方输出
-  fact_check: FactCheckResponse # 校验输出
-  moderator: ModeratorResponse  # 裁决输出
+  advocate: AgentResponse      # Pro-side output
+  critic: AgentResponse        # Con-side output
+  fact_check: FactCheckResponse # Fact-check output
+  moderator: ModeratorResponse  # Ruling output
 ```
 
 ---
 
-## 2. 论点 ID 规范
+## 2. Argument ID Specification
 
 ```
-格式: {ROLE_PREFIX}-R{round}-{index}
+Format: {ROLE_PREFIX}-R{round}-{index}
 
-正方: ADV-R1-01, ADV-R1-02, ADV-R2-01, ...
-反方: CRT-R1-01, CRT-R1-02, CRT-R2-01, ...
+Pro-side: ADV-R1-01, ADV-R1-02, ADV-R2-01, ...
+Con-side: CRT-R1-01, CRT-R1-02, CRT-R2-01, ...
 ```
 
-- `ROLE_PREFIX`: `ADV` (Advocate) 或 `CRT` (Critic)
-- `R{round}`: 提出轮次
-- `{index}`: 本轮内序号，从 01 开始
+- `ROLE_PREFIX`: `ADV` (Advocate) or `CRT` (Critic)
+- `R{round}`: Round in which the argument was raised
+- `{index}`: Sequence number within the round, starting at 01
 
-反驳 (Rebuttal) 通过 `target_argument_id` 引用对方论点 ID。
+Rebuttals reference the target argument ID via `target_argument_id`.
 
 ---
 
-## 3. 论点生命周期
+## 3. Argument Lifecycle
 
-每个论点有 4 种状态，单向流转：
+Each argument has 4 possible states with one-way transitions:
 
 ```
-                    ┌── 被有效反驳 ──→ REBUTTED
+                    ┌── Effectively rebutted ──→ REBUTTED
                     │
-  ACTIVE ──────────┼── 提出方让步 ──→ CONCEDED
+  ACTIVE ──────────┼── Proponent concedes  ──→ CONCEDED
                     │
-                    └── 经修正继续 ──→ MODIFIED (仍存活)
+                    └── Revised and alive   ──→ MODIFIED (still alive)
 ```
 
-- **ACTIVE**: 存活，未被有效反驳
-- **REBUTTED**: 已被有效反驳 (Fact-Checker 判 flawed 也会触发)
-- **CONCEDED**: 提出方主动承认对方有理
-- **MODIFIED**: 经修正后继续存活 (计为存活)
+- **ACTIVE**: Alive; not yet effectively rebutted
+- **REBUTTED**: Effectively rebutted (Fact-Checker `flawed` verdict also triggers this)
+- **CONCEDED**: Proponent voluntarily concedes the opponent's point
+- **MODIFIED**: Revised and still alive (counts as survived)
 
 ---
 
-## 4. 每轮执行顺序
+## 4. Per-Round Execution Order
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                    单轮辩论流程                        │
+│                  Single-Round Debate Flow            │
 │                                                     │
-│  1. Round Setup — 递增轮次，清空当前轮临时数据          │
+│  1. Round Setup — increment round, clear temp data  │
 │       ↓                                             │
-│  2. Advocate — 正方发言                               │
-│     · 第 1 轮：提出 3-5 个核心论点                     │
-│     · 第 2+ 轮：反驳 + 修正/让步 + 可选新论点           │
+│  2. Advocate — pro-side speaks                      │
+│     · Round 1: present 3–5 core arguments           │
+│     · Round 2+: rebut + revise/concede + new args   │
 │       ↓                                             │
-│  3. Critic — 反方发言                                 │
-│     · 检查正方论点 → 反驳 + 提出反面论点               │
-│     · 回应正方对自己论点的反驳                         │
+│  3. Critic — con-side speaks                        │
+│     · Review pro-side → rebut + raise con args      │
+│     · Respond to pro-side rebuttals against self    │
 │       ↓                                             │
-│  4. Fact-Checker — 校验本轮所有论点和反驳              │
-│     · 判定: valid / flawed / needs_context /         │
+│  4. Fact-Checker — verify all arguments/rebuttals   │
+│     · Verdicts: valid / flawed / needs_context /    │
 │       unverifiable                                  │
-│     · flawed → 自动将论点标记为 REBUTTED              │
+│     · flawed → automatically marks arg as REBUTTED  │
 │       ↓                                             │
-│  5. Moderator — 裁决                                  │
-│     · 总结 → 识别分歧 → 算收敛分数 → 裁决继续/终止    │
+│  5. Moderator — ruling                              │
+│     · Summarize → identify divergences →            │
+│       compute convergence score → rule continue/end │
 │       ↓                                             │
-│  6. 条件分支:                                         │
-│     · should_continue = true → 回到步骤 1             │
-│     · should_continue = false → 进入报告生成          │
+│  6. Conditional branch:                             │
+│     · should_continue = true → back to step 1      │
+│     · should_continue = false → report generation  │
 └─────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 5. 收敛终止条件
+## 5. Convergence Termination Conditions
 
-满足以下 **任一** 条件时终止辩论：
+The debate terminates when **any one** of the following conditions is met:
 
-| 条件 | 说明 |
-|------|------|
-| 达到最大轮数 | `current_round >= max_rounds` |
-| Moderator 判定终止 | `should_continue = false` |
-| 连续高分 | 连续 2 轮 `convergence_score >= convergence_score_target` |
-| 错误状态 | `status == "error"` |
+| Condition | Description |
+|-----------|-------------|
+| Max rounds reached | `current_round >= max_rounds` |
+| Moderator rules termination | `should_continue = false` |
+| Consecutive high scores | 2 consecutive rounds with `convergence_score >= convergence_score_target` |
+| Error state | `status == "error"` |
 
-终止后进入 **Report Generator** 阶段，生成最终 `DecisionReport`。
-
----
-
-## 6. 报告生成
-
-终止后，生成包含 **两个部分** 的完整报告：
-
-### 第一部分：完整辩论记录
-
-渲染每一轮的完整 transcript，包括：
-- 每轮每个 Agent 的完整输出（论点、反驳、让步、信心变化）
-- Fact-Checker 对每个论点的判定和说明
-- Moderator 的总结、收敛分数可视化和裁决
-- 辩论终止状态和原因
-
-### 第二部分：总结分析
-
-由 Report Generator 读取完整辩论 transcript，输出 `DecisionReport`：
-
-- **executive_summary**: 3-5 句概括
-- **recommendation**: 建议方向 + 置信度 (high/medium/low) + 前提条件
-- **pro/con_arguments**: 仅包含 active/modified 状态的论点，按 strength 降序
-- **unresolved_disagreements**: 未达成共识的核心议题
-- **next_steps**: 具体可执行的后续行动 (不允许模糊措辞)
-
-最终报告是一份 **自包含文档**：读者无需参与辩论过程，仅靠报告即可完整理解决策论证的全貌。
+After termination, the **Report Generator** phase runs to produce the final `DecisionReport`.
 
 ---
 
-## 7. 执行伪代码
+## 6. Report Generation
+
+After termination, a complete report with **two parts** is generated:
+
+### Part 1: Full Debate Transcript
+
+Renders the complete transcript for every round, including:
+- Full output from each agent per round (arguments, rebuttals, concessions, confidence shifts)
+- Fact-Checker verdicts and explanations for each argument
+- Moderator summary, convergence score visualization, and ruling
+- Debate termination status and reason
+
+### Part 2: Summary Analysis
+
+The Report Generator reads the full debate transcript and outputs a `DecisionReport`:
+
+- **executive_summary**: 3–5 sentence summary
+- **recommendation**: Recommended direction + confidence (high/medium/low) + preconditions
+- **pro/con_arguments**: Only arguments with status `active` or `modified`, sorted by `strength` descending
+- **unresolved_disagreements**: Core issues where no consensus was reached
+- **next_steps**: Concrete actionable follow-up steps (vague phrases like "further research needed" are not allowed)
+
+The final report is a **self-contained document**: readers can fully understand the decision analysis without having participated in the debate.
+
+---
+
+## 7. Execution Pseudocode
 
 ```python
 async def run_adversarial_debate(question, context=None, max_rounds=5):
@@ -177,29 +178,29 @@ async def run_adversarial_debate(question, context=None, max_rounds=5):
 
 ---
 
-## 8. Transcript 压缩策略
+## 8. Transcript Compression Strategy
 
-为控制上下文窗口长度：
+To control context window length:
 
-| 轮次位置 | 传递内容 |
-|----------|----------|
-| ≤ `transcript_compression_after_round` (默认 2) | 完整 transcript |
-| 更早的历史轮 | 仅 Moderator 的 `round_summary` (摘要代替全文) |
-| 最近 1 轮 | 完整 transcript |
-| 当前轮已完成阶段 | 完整输出 |
+| Round position | Content passed |
+|----------------|----------------|
+| ≤ `transcript_compression_after_round` (default 2) | Full transcript |
+| Earlier history rounds | Only Moderator's `round_summary` (summary replaces full text) |
+| Most recent 1 round | Full transcript |
+| Completed phases in the current round | Full output |
 
 ---
 
-## 9. 错误处理与重试
+## 9. Error Handling and Retry
 
 ```
-LLM 调用:
-  · 最多重试 2 次 (MAX_RETRIES = 2)
-  · Pydantic 校验失败 → 附加格式纠正指令后重试
-  · LLM API 错误 → 直接重试
-  · 全部失败 → 抛出 RuntimeError
+LLM calls:
+  · Max 2 retries (MAX_RETRIES = 2)
+  · Pydantic validation failure → append format correction instruction and retry
+  · LLM API error → retry directly
+  · All retries exhausted → raise RuntimeError
 
-模型降级:
-  · 每个 Agent 可配置 fallback 模型
-  · 主模型失败时自动切换到 fallback
+Model fallback:
+  · Each agent can configure a fallback model
+  · Automatically switches to fallback when primary model fails
 ```

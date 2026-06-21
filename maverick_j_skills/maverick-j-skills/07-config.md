@@ -1,42 +1,42 @@
-# 配置参数与使用示例
+# Configuration Parameters and Usage Examples
 
-> 本文件包含运行参数配置、模型选择建议和实际使用示例。
-
----
-
-## 1. 核心配置参数
-
-| 参数 | 默认值 | 说明 |
-|------|--------|------|
-| `max_rounds` | 5 | 最大辩论轮数。简单问题 3 轮够用，复杂决策可设 5-7 |
-| `convergence_score_target` | 0.8 | 收敛分数阈值。越低越容易终止，越高辩论越深入 |
-| `convergence_threshold` | 2 | 连续几轮达标才终止。防止单轮偶然高分导致过早结束 |
-| `language` | auto | 输出语言。`auto` = 跟随问题语言，`zh` = 中文，`en` = 英文 |
-| `transcript_compression_after_round` | 2 | 超过 N 轮后压缩历史 transcript，减少上下文消耗 |
+> This file contains runtime parameter configuration, model selection recommendations, and practical usage examples.
 
 ---
 
-## 2. 模型选择建议
+## 1. Core Configuration Parameters
 
-### 按角色推荐
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `max_rounds` | 5 | Maximum debate rounds. 3 rounds suffice for simple questions; set 5–7 for complex decisions |
+| `convergence_score_target` | 0.8 | Convergence score threshold. Lower = easier to terminate; higher = deeper debate |
+| `convergence_threshold` | 2 | Number of consecutive qualifying rounds required before termination. Prevents premature ending from a single accidental high score |
+| `language` | auto | Output language. `auto` = follow the question's language, `zh` = Chinese, `en` = English |
+| `transcript_compression_after_round` | 2 | Compress history transcript after N rounds to reduce context consumption |
 
-| 角色 | Temperature | 推荐特性 | 示例模型 |
-|------|-------------|----------|----------|
-| Advocate | 0.7 | 创造性推理、论证构建 | Claude Sonnet, GPT-4o |
-| Critic | 0.7 | 批判性思维、漏洞识别 | Claude Sonnet, GPT-4o |
-| Fact-Checker | 0.3 | 精确分析、逻辑判定 | GPT-4o-mini, Claude Haiku |
-| Moderator | 0.5 | 平衡判断、收敛评估 | Claude Haiku, GPT-4o-mini |
-| Report Gen | 0.5 | 结构化写作 | Claude Sonnet, GPT-4o |
+---
 
-### 成本优化策略
+## 2. Model Selection Recommendations
 
-**全统一（低成本）**: 所有角色使用同一个快速模型
+### Recommendations by Role
+
+| Role | Temperature | Recommended characteristics | Example models |
+|------|-------------|----------------------------|----------------|
+| Advocate | 0.7 | Creative reasoning, argument construction | Claude Sonnet, GPT-4o |
+| Critic | 0.7 | Critical thinking, flaw identification | Claude Sonnet, GPT-4o |
+| Fact-Checker | 0.3 | Precise analysis, logical judgment | GPT-4o-mini, Claude Haiku |
+| Moderator | 0.5 | Balanced judgment, convergence assessment | Claude Haiku, GPT-4o-mini |
+| Report Gen | 0.5 | Structured writing | Claude Sonnet, GPT-4o |
+
+### Cost Optimization Strategies
+
+**Unified (low cost)**: All roles use the same fast model
 ```yaml
 default_provider: claude
 default_model: claude-haiku-4-5-20251001
 ```
 
-**混合配置（推荐）**: 关键角色用强模型，辅助角色用快模型
+**Mixed configuration (recommended)**: Strong model for key roles, fast model for supporting roles
 ```yaml
 agents:
   advocate:
@@ -61,10 +61,10 @@ agents:
     temperature: 0.5
 ```
 
-### 成本参考
+### Cost Reference
 
-| 模型 | Input ($/1M tokens) | Output ($/1M tokens) | 3轮辩论估算 |
-|------|---------------------|----------------------|-------------|
+| Model | Input ($/1M tokens) | Output ($/1M tokens) | 3-round debate estimate |
+|-------|---------------------|----------------------|------------------------|
 | Claude Haiku 4.5 | $0.80 | $4.00 | ~$0.05 |
 | GPT-4o-mini | $0.15 | $0.60 | ~$0.02 |
 | Claude Sonnet 4 | $3.00 | $15.00 | ~$0.20 |
@@ -72,120 +72,120 @@ agents:
 
 ---
 
-## 3. 使用示例
+## 3. Usage Examples
 
-### 示例 1: 技术方案选型
-
-```
-问题: "我们应该将现有的 Java 后端服务迁移到 Go 吗？"
-
-背景: "50 人后端团队，Java + Spring Boot 技术栈已运行 3 年。
-痛点：
-1. JVM 内存占用高，部署成本高
-2. 冷启动慢，影响 Serverless 场景
-3. 部分成员对 Go 感兴趣
-4. 服务主要是 API Gateway 和微服务
-5. 年收入约 700 万美元，技术预算约 110 万美元"
-
-轮数: 3
-```
-
-### 示例 2: 商业决策
+### Example 1: Technology Choice
 
 ```
-问题: "我们应该自建数据分析平台还是购买第三方方案？"
+Question: "Should we migrate our existing Java backend services to Go?"
 
-背景: "B2B SaaS 公司，200+ 企业客户，数据量 2TB/月，
-当前使用 Mixpanel 年费 $180k，客户要求自定义仪表板和数据导出"
+Context: "50-person backend team, Java + Spring Boot stack running for 3 years.
+Pain points:
+1. High JVM memory usage, high deployment costs
+2. Slow cold start, affecting Serverless scenarios
+3. Some team members are interested in Go
+4. Services are primarily API Gateways and microservices
+5. Annual revenue ~$7M, tech budget ~$1.1M"
 
-轮数: 5
+Rounds: 3
 ```
 
-### 示例 3: 团队管理
+### Example 2: Business Decision
 
 ```
-问题: "我们应该从部分远程办公转为全远程团队吗？"
+Question: "Should we build our own data analytics platform or buy a third-party solution?"
 
-背景: "120 人科技公司，当前每周 3 天到办公室。
-旧金山办公室年租金 $900k。跨 3 个时区有 20% 的远程员工。"
+Context: "B2B SaaS company, 200+ enterprise customers, 2 TB/month data volume,
+currently using Mixpanel at $180k/year, customers requesting custom dashboards and data exports"
 
-轮数: 3
+Rounds: 5
 ```
 
----
-
-## 4. 快速触发模板
-
-在 Claude Code / Cowork 中使用此格式触发辩论：
+### Example 3: Team Management
 
 ```
-请对以下决策问题进行多 Agent 对抗式辩论分析：
+Question: "Should we switch from hybrid remote to fully remote?"
 
-问题: [你的决策问题]
-背景: [可选的补充背景]
-轮数: [可选，默认 3 轮]
-语言: [可选，默认跟随问题语言]
+Context: "120-person tech company, currently 3 days/week in office.
+San Francisco office rent $900k/year. 20% remote employees across 3 time zones."
+
+Rounds: 3
 ```
 
 ---
 
-## 5. 追问模式
+## 4. Quick Trigger Template
 
-第一轮辩论结束后，可以基于结论继续追问。追问时系统自动将上一轮结果注入为背景：
+Use this format in Claude Code / Cowork to trigger a debate:
 
 ```
-追问内容自动携带的背景:
-  - 上一个辩题
-  - 辩论结论概要
-  - 建议方向和置信度
-  - 主要正面论点 (top 3)
-  - 主要反面论点 (top 3)
-  - 尚未解决的分歧 (top 3)
-```
+Please perform a multi-agent adversarial debate analysis on the following decision:
 
-示例追问：
-```
-基于上述辩论结果，如果决定迁移到 Go，最佳的渐进式迁移策略是什么？
+Question: [your decision question]
+Context: [optional background]
+Rounds: [optional, default 3]
+Language: [optional, default follows question language]
 ```
 
 ---
 
-## 6. 报告输出格式
+## 5. Follow-up Mode
 
-最终报告为两段式 Markdown 文档：
+After the first debate concludes, you can continue asking follow-up questions based on the conclusions. The system automatically injects the previous debate result as context:
 
 ```
-# 决策分析报告
+Context automatically carried over in follow-ups:
+  - Previous debate question
+  - Debate conclusion summary
+  - Recommended direction and confidence
+  - Top 3 pro arguments
+  - Top 3 con arguments
+  - Top 3 unresolved disagreements
+```
 
-# 第一部分：完整辩论记录          ← 每轮 4 个 Agent 的完整对话
-  ## 第 1 轮辩论
-    ### 🟢 正方论证者               ← 论点 + 反驳 + 让步 + 信心变化
-    ### 🔴 反方批评者
-    ### 🔍 事实校验者               ← 每个论点的判定
-    ### ⚖️ 主持人裁决               ← 总结 + 收敛分数条 + 裁决
-  ## 第 2 轮辩论
+Example follow-up:
+```
+Based on the above debate results, if we decide to migrate to Go, what is the best incremental migration strategy?
+```
+
+---
+
+## 6. Report Output Format
+
+The final report is a two-part Markdown document:
+
+```
+# Decision Analysis Report
+
+# Part 1: Full Debate Transcript          ← Complete dialogue from all 4 agents per round
+  ## Round 1
+    ### 🟢 Advocate                       ← Arguments + rebuttals + concessions + confidence shift
+    ### 🔴 Critic
+    ### 🔍 Fact-Checker                   ← Verdict per argument
+    ### ⚖️ Moderator's Ruling             ← Summary + convergence score bar + decision
+  ## Round 2
   ...
 
-# 第二部分：总结分析              ← LLM 生成的结构化分析
-  ## 执行摘要
-  ## 建议 (方向 + 置信度 + 前提)
-  ## 正方论点 (按强度排序)
-  ## 反方论点 (按强度排序)
-  ## 已解决/未解决的分歧
-  ## 风险因素
-  ## 后续行动
-  ## 辩论统计
+# Part 2: Summary Analysis               ← LLM-generated structured analysis
+  ## Executive Summary
+  ## Recommendation (direction + confidence + preconditions)
+  ## Pro Arguments (sorted by strength)
+  ## Con Arguments (sorted by strength)
+  ## Resolved / Unresolved Disagreements
+  ## Risk Factors
+  ## Next Steps
+  ## Debate Statistics
 ```
 
 ---
 
-## 7. 调优建议
+## 7. Tuning Guide
 
-| 症状 | 调整 |
-|------|------|
-| 辩论太浅，论点都很表面 | 增加 `max_rounds`，使用更强模型 (Sonnet/GPT-4o) |
-| 辩论太贵 | 减少 `max_rounds`，Fact-Checker/Moderator 用轻量模型 |
-| 收敛太快，讨论不充分 | 提高 `convergence_score_target` (如 0.85) |
-| 不收敛，一直转圈 | 降低 `convergence_score_target`，检查 Moderator 提示词 |
-| 论点重复 | 确保 Advocate/Critic 提示词中 "不得重复已被驳倒的论点" 生效 |
-| 角色混淆 (单LLM模式) | 在每个角色切换时加强角色声明，用 `---` 分隔 |
+| Symptom | Adjustment |
+|---------|-----------|
+| Debate too shallow, arguments too surface-level | Increase `max_rounds`, use stronger models (Sonnet/GPT-4o) |
+| Debate too expensive | Decrease `max_rounds`, use lightweight models for Fact-Checker/Moderator |
+| Converges too fast, insufficient discussion | Raise `convergence_score_target` (e.g., 0.85) |
+| Never converges, keeps looping | Lower `convergence_score_target`, inspect Moderator prompt |
+| Arguments repeat | Ensure the "do not repeat already-refuted arguments" rule is enforced in Advocate/Critic prompts |
+| Role confusion (single-LLM mode) | Strengthen role declaration at each role switch, use `---` as separator |
